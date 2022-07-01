@@ -2,3 +2,4 @@ env
 *.csv
 data
 .ipynb_checkpoints
+.access_token

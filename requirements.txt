@@ -2,3 +2,4 @@ pandas
 numpy
 pydrive2
 tqdm
+altair

@@ -3,3 +3,4 @@ numpy
 pydrive2
 tqdm
 altair
+vaderSentiment

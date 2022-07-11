@@ -3,4 +3,7 @@ numpy
 pydrive2
 tqdm
 altair
+matplotlib
 vaderSentiment
+sklearn
+statsmodels

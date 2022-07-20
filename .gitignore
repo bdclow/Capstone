@@ -3,3 +3,4 @@ env
 data
 .ipynb_checkpoints
 .access_token
+.DS_Store

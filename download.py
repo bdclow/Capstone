@@ -5,7 +5,7 @@ import argparse
 import os
 
 
-def download_data(drive_folder_id, target_dir, redownload=False):
+def download_data(drive_folder_id, target_dir, force_redownload):
     '''
     Through drive api download files if don't exist already
     '''
@@ -22,7 +22,7 @@ def download_data(drive_folder_id, target_dir, redownload=False):
     existing_files = os.scandir(target_dir)
     for file in tqdm(file_list):
         if file['mimeType'] == 'text/csv': 
-            if not redownload and (file not in existing_files):
+            if not force_redownload and (file not in existing_files):
                 file.GetContentFile(f"data/{file['title']}")
 
 def main():
@@ -36,7 +36,6 @@ def main():
             help='Whether to force redownload all, defaults to not redownloading')
 
     args = parser.parse_args()
-    print(args)
     if args.drive_folder_id:
         drive_folder_id = args.drive_folder_id
     else:
@@ -50,6 +49,6 @@ def main():
     download_data(
             drive_folder_id=drive_folder_id,
             target_dir=target_dir,
-            redownload=args.force)
+            force_redownload=args.force)
 
 main()

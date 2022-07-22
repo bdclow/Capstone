@@ -110,5 +110,4 @@ def main():
         "../data/watch_time_by_trial_day.csv")
 
 
-#main()
-
+main()

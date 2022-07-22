@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 import pandas as pd
+import os
 
 starts_file = 'skillshare_2022_starts.csv'
-
 # numbered from 0 to 62
 vviews_files = [f"skillshare_2022_vviews_{i}.csv" for i in range(0, 63)]
+# cwd
+script_dir = os.path.dirname(__file__)
+# data directory
+data_dir = os.path.abspath(os.path.join(script_dir, "..", "data"))
 
 
 def load_csv_to_df(filepath):
     '''
     wrap pandas method for our csvs
     '''
-    return pd.read_csv("../data/" + filepath, index_col=0)
+    return pd.read_csv(data_dir + filepath, index_col=0)
 
 
 def convert_cols(row: pd.Series, prev_col: str, day: int):
@@ -106,4 +110,5 @@ def main():
         "../data/watch_time_by_trial_day.csv")
 
 
-main()
+#main()
+

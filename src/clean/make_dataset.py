@@ -33,7 +33,9 @@ def main():
     config = load_config("dataset.yml")
     print(config)
     starts = DataSet("skillshare_2022_starts.csv", config["starts"])
+    by_trial_day = DataSet("watch_time_by_trial_day.csv", config["watchtime_by_trial_day"])
     print(starts.dataframe().info())
+    print(by_trial_day.dataframe().info())
 
     #with open(os.path.join(data_dir, "cleaned/cleaned.csv")) as cleaned_csv:
     #

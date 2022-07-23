@@ -18,6 +18,9 @@ parse_dt = lambda dt_str: datetime.strptime(dt_str, date_format)
 class DataSet:
     '''
     Class with info about each dataset
+    columns parameter takes dict with datatype info
+        and optional filtering parameter
+        given by config file
     dataframe method returns Pandas DF
     filter method filters column by value
     '''
@@ -63,12 +66,14 @@ class DataSet:
                         logging.error(f"dtype not specified for {column} column")
         
         for column, item in self.columns.items():
+            # apply filtering method based on configuration values
             try:
                 filter_by = item["filter"]
                 self.filter(column, filter_by)
             except KeyError:
                 pass
         if one_hot_categories:
+            # if one hot encoding needed, create necessary cols
             df = self.df.copy()
             logging.info("Creating one-hot encodings")
             for column, dtype in tqdm(self.columns.items()):
@@ -83,6 +88,11 @@ class DataSet:
             return self.df
 
     def filter(self, column, value):
+        '''
+        Filters dataframe based on parameter
+        This is pretty simple, if most complicated needed
+        Would just Pandas DF methods as usual
+        '''
         if self.df is None:
             _ = self.dataframe()
         if type(value) is list:

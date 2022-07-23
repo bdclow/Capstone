@@ -1,10 +1,21 @@
 
-data: 
-	source env/bin/activate; python download.py
+by_trial_day := data/watch_time_by_trial_day.csv
+cleaned := data/cleaned/clean.parquet
 
-data/watch_time_by_trial_day.csv: data
-	source env/bin/activate; python clean/by_trial_day.py
+cleaned: $(by_trial_day)
+	@. env/bin/activate; python src/clean/make_dataset.py
 
-install: 
-	source env/bin/activate; pip install -r requirements.txt
+$(by_trial_day): | data
+	@echo "Creating artifacts"
+	@. env/bin/activate; python src/clean/by_trial_day.py
+
+data: | env/touchfile
+	@echo "Downloading data"
+	@. env/bin/activate; python download.py
+
+env/touchfile: 
+	@echo "Setting up virtualenv"
+	@test -d env || virtualenv env
+	@. env/bin/activate; pip install -r requirements.txt
+	@touch env/touchfile
 

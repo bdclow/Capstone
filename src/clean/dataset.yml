@@ -30,6 +30,10 @@ starts:
   was_upgraded:
     dtype: bool
     filter: False
+  is_refunded:
+    dtype: bool
+  first_payment_time:
+    dtype: datetime64[ns]
   #trial_length_offer:
   #dtype:  object
   #sub_utm_source:
@@ -48,3 +52,61 @@ starts:
 watchtime_by_trial_day:
   user_uid:
     dtype: int32
+
+classes:
+  class_id:
+  class_title:
+  create_time:
+  description:
+  takeaway:
+  category:
+  subcategory:
+  status:
+  is_featured:
+  is_premium_only:
+  publish_time:
+  publish_date:
+  teacher_uid:
+  teacher_name:
+  is_top_teacher:
+  teacher_create_time:
+  teacher_account_age:
+  is_original:
+  class_type:
+  quality_grade:
+  quality_grade_letter:
+  is_quality_class:
+  grade_note:
+  n_reviews:
+  review_avg:
+  level_id:
+  level:
+  has_been_staff_pick:
+  n_times_staff_pick:
+  first_staff_pick_time:
+  last_staff_pick_time:
+  has_project:
+  class_detail_page_link:
+  total_video_duration:
+  n_lessons:
+  trailer_duration:
+  first_lesson_duration:
+  class_display_name:
+  image_huge:
+  language:
+  language_grade_notes_1:
+  language_grade_notes_2:
+  language_grade_notes_3:
+  language_grade_notes_all:
+  has_non_english_content:
+  non_english_language_1:
+  class_origin:
+  class_origin_raw:
+  published_class_number:
+  teacher_first_publish_time:
+  is_last_published_class:
+    dtype: bool
+  is_first_original_class:
+    dtype: bool
+  is_first_quality_class:
+    dtype: bool

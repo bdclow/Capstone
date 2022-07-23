@@ -1,8 +1,9 @@
 import argparse
-from os import path, pardir
+from os import path
 import logging
 import yaml
 from dataset import DataSet, data_dir
+from pandas import merge
 
 logging.basicConfig(
         format='%(asctime)s %(message)s',
@@ -31,14 +32,28 @@ def main():
         data_dir = args.target_dir
 
     config = load_config("dataset.yml")
-    print(config)
     starts = DataSet("skillshare_2022_starts.csv", config["starts"])
-    by_trial_day = DataSet("watch_time_by_trial_day.csv", config["watchtime_by_trial_day"])
-    print(starts.dataframe().info())
-    print(by_trial_day.dataframe().info())
+    views_by_trial_day = DataSet("watch_time_by_trial_day.csv", config["watchtime_by_trial_day"])
+    classes = DataSet("skillshare_2022_classes.csv", config["classes"])
 
-    #with open(os.path.join(data_dir, "cleaned/cleaned.csv")) as cleaned_csv:
-    #
-    #
+    # CREATE TARGET
+    starts_df = starts.dataframe(one_hot_categories=True)
+    # add a successful conversion column.
+    starts_df['success'] = 0
+    # set to 1 if they paid
+    starts_df['success'][starts_df['first_payment_time'].notnull()] = 1
+    # return to 0 if they got a refund.
+    starts_df['success'][starts_df['is_refunded']==1] = 0
+    # drop leaky columns
+    starts_df = starts_df.drop(['first_payment_time', 'is_refunded'], axis=1)
+
+    final_df = merge(
+        starts_df,
+        views_by_trial_day.dataframe(),
+        on="user_uid")
+
+    outfile = path.join(data_dir, "cleaned/cleaned.parquet")
+    final_df.to_parquet(outfile)
+    logging.info(f"Cleaned dataset saved to {outfile}")
 
 main()

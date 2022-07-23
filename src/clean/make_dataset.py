@@ -1,9 +1,10 @@
 import argparse
-from os import path
+from os import path, mkdir
 import logging
 import yaml
-from dataset import DataSet, data_dir
-from pandas import merge
+from dataset import DataSet, data_dir, script_path, parent_dir
+import pandas
+pandas.options.mode.chained_assignment = None
 
 logging.basicConfig(
     format='%(asctime)s %(message)s',
@@ -31,9 +32,12 @@ def main():
     args = parser.parse_args()
 
     if args.output_directory:
-        data_dir = args.target_dir
+        data_directory = args.target_dir
+    else:
+        data_directory = data_dir
 
-    config = load_config("dataset.yml")
+    script_dir = parent_dir(script_path)
+    config = load_config(path.join(script_dir, "dataset.yml"))
     starts = DataSet("skillshare_2022_starts.csv", config["starts"])
     views_by_trial_day = DataSet(
         "watch_time_by_trial_day.csv", config["watchtime_by_trial_day"])
@@ -50,12 +54,15 @@ def main():
     # drop leaky columns
     starts_df = starts_df.drop(['first_payment_time', 'is_refunded'], axis=1)
 
-    final_df = merge(
+    final_df = pandas.merge(
         starts_df,
         views_by_trial_day.dataframe(),
         on="user_uid")
 
-    outfile = path.join(data_dir, "cleaned/cleaned.parquet")
+    cleaned_dir = path.join(data_directory, "cleaned")
+    if not path.exists(cleaned_dir):
+        mkdir(cleaned_dir)
+    outfile = path.join(cleaned_dir, "cleaned.parquet")
     final_df.to_parquet(outfile)
     logging.info(f"Cleaned dataset saved to {outfile}")
 

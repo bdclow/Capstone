@@ -32,7 +32,7 @@ class DataSet:
         
     def __repr__(self):
         return f"'{self.name}' dataset"
-    
+
     def dataframe(self, one_hot_categories=False):
         '''
         Load CSV to Pandas DataFrame if not loaded

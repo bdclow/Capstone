@@ -16,7 +16,7 @@ def load_csv_to_df(filepath):
     '''
     wrap pandas method for our csvs
     '''
-    return pd.read_csv(data_dir + filepath, index_col=0)
+    return pd.read_csv(os.path.join(data_dir, filepath), index_col=0)
 
 
 def convert_cols(row: pd.Series, prev_col: str, day: int):

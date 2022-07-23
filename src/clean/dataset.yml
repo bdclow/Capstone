@@ -1,0 +1,50 @@
+starts:
+  id:
+    dtype: int32
+  user_uid:
+    dtype: int32
+  create_time:
+    dtype: datetime64[ns]
+  is_active:
+    dtype: bool
+  plan_length:
+    dtype: int8
+    filter: 12
+  is_team:
+    dtype: bool
+    filter: False
+  is_scholarship:
+    dtype: bool
+    filter: False
+  trial_length_days:
+    dtype:  int8
+    filter:
+      - 7
+      - 13
+  is_direct_to_paid:
+    dtype: bool
+    filter: False
+  had_trial:
+    dtype: bool
+    filter: True
+  was_upgraded:
+    dtype: bool
+    filter: False
+  #trial_length_offer:
+  #dtype:  object
+  #sub_utm_source:
+  #  dtype:  object sub_utm_source has 286 unique values
+  #sub_utm_campaign:
+  #  dtype:  object sub_utm_campaign has 14794 unique values
+  #sub_utm_medium:
+  #  dtype:  object sub_utm_medium has 1530 unique values
+  #sub_utm_term:
+  #  dtype:  object sub_utm_term has 20808 unique values
+  sub_utm_channel:
+    dtype:  object #sub_utm_channel has 19 unique values
+  #referral_source:
+  #  dtype:  object #referral_source has 5391 unique values
+
+watchtime_by_trial_day:
+  user_uid:
+    dtype: int32

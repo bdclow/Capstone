@@ -18,3 +18,4 @@ env/touchfile:
 
 clean:
 	rm -rf env
+	rm -rf data/cleaned

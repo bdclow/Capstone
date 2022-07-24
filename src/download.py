@@ -55,9 +55,6 @@ def main():
     if args.target_dir:
         target_dir = args.target_dir
     else:
-        #script_path = os.path.abspath(__file__)
-        #root_dir = os.path.abspath(os.path.join(script_path, os.pardir))
-        #target_dir = os.path.join(root_dir, "data")
         target_dir = data_dir
 
     download_data(

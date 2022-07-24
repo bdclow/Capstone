@@ -3,7 +3,7 @@ from os import path, mkdir
 import logging
 import yaml
 from src.clean.dataset import DataSet
-from src import data_dir, script_path, parent_dir
+from src import data_dir, parent_dir
 import pandas
 pandas.options.mode.chained_assignment = None
 
@@ -37,6 +37,7 @@ def main():
     else:
         data_directory = data_dir
 
+    script_path = path.abspath(__file__)
     script_dir = parent_dir(script_path)
     config = load_config(path.join(script_dir, "dataset.yml"))
     starts = DataSet("skillshare_2022_starts.csv", config["starts"])

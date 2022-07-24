@@ -2,7 +2,8 @@ import argparse
 from os import path, mkdir
 import logging
 import yaml
-from src.clean.dataset import DataSet, data_dir, script_path, parent_dir
+from src.clean.dataset import DataSet
+from src import data_dir, script_path, parent_dir
 import pandas
 pandas.options.mode.chained_assignment = None
 

@@ -1,17 +1,12 @@
 import pandas
 from datetime import datetime
-from os import path, pardir
+from os import path
 import logging
 from tqdm import tqdm
-
-def parent_dir(directory: str):
-    return path.abspath(path.join(directory, pardir))
+from src import data_dir
 
 prefix = "skillshare_2022_"
 suffix = ".csv"
-script_path = path.abspath(__file__)
-root_dir = parent_dir(parent_dir(parent_dir(script_path)))
-data_dir = path.join(root_dir, "data")
 date_format = "%Y-%m-%d %H:%M:%S"
 parse_dt = lambda dt_str: datetime.strptime(dt_str, date_format)
 

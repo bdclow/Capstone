@@ -6,6 +6,10 @@ data/watch_time_by_trial_day.csv: | data
 	@echo "Creating artifacts"
 	@. env/bin/activate; python -m src.clean.by_trial_day
 
+update_data:
+	@echo "Downloading data"
+	@. env/bin/activate; python -m src.download
+
 data: | env/touchfile
 	@echo "Downloading data"
 	@. env/bin/activate; python -m src.download

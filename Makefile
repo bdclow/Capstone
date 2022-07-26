@@ -20,6 +20,13 @@ env/touchfile:
 	@. env/bin/activate; pip install -r requirements.txt
 	@touch env/touchfile
 
+update_requirements:
+	@echo "Install new pip packages"
+	@. env/bin/activate; pip install -r requirements.txt
+
+clean_cleaned:
+	rm -rf data/cleaned
+
 clean:
 	rm -rf env
 	rm -rf data/cleaned

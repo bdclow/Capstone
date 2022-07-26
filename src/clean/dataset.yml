@@ -1,3 +1,11 @@
+# This is a YAML file that contains our information
+# about dataset columns.  In order to keep our memory 
+# usage minimal, using the most efficient datatypes we
+# can.  We can also specify datetime columns which
+# get converted when the file is loaded
+
+
+# Columns for membership starts dataset
 starts:
   id:
     dtype: int32
@@ -34,8 +42,10 @@ starts:
     dtype: bool
   first_payment_time:
     dtype: datetime64[ns]
-  #trial_length_offer:
-  #dtype:  object
+  sub_utm_channel:
+    dtype:  object #sub_utm_channel has 19 unique values
+  # These are not being included for now given how sparse they are
+  # ------------------------------------------------
   #sub_utm_source:
   #  dtype:  object sub_utm_source has 286 unique values
   #sub_utm_campaign:
@@ -44,14 +54,58 @@ starts:
   #  dtype:  object sub_utm_medium has 1530 unique values
   #sub_utm_term:
   #  dtype:  object sub_utm_term has 20808 unique values
-  sub_utm_channel:
-    dtype:  object #sub_utm_channel has 19 unique values
   #referral_source:
   #  dtype:  object #referral_source has 5391 unique values
 
-watchtime_by_trial_day:
+# Demographic data dataset
+subs_meta:
+  user_uid:
+    dtype: i32
+  signup_country_name:
+    dtype: object
+  signup_geo_region:
+    dtype: object
+  signup_platform:
+    dtype: object
+
+# A array of countries to use for
+# the above information, this is based 
+# on utilization (anglophone)
+countries_to_keep:
+  - United States
+  - United Kingdom
+  - Canada
+  - India
+
+# Video watch times dataset
+watch_time_by_trial_day:
   user_uid:
     dtype: int32
+  day_1_total_watchtime:
+    dtype: float32
+  day_1_watched_video_length:
+    dtype: float32
+  day_2_total_watchtime:
+    dtype: float32
+  day_2_watched_video_length:
+    dtype: float32
+  day_3_total_watchtime:
+    dtype: float32
+  day_3_watched_video_length:
+    dtype: float32
+  day_-3_total_watchtime:
+    dtype: float32
+  day_-3_watched_video_length:
+    dtype: float32
+  day_-2_total_watchtime:
+    dtype: float32
+  day_-2_watched_video_length:
+    dtype: float32
+  day_-1_total_watchtime:
+    dtype: float32
+  day_-1_watched_video_length:
+    dtype: float32
+
 
 classes:
   class_id:

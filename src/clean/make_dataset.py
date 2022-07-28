@@ -135,13 +135,17 @@ def combine_datasets(
             one_hot_categories=True)[anglophone_countries]
 
     # Merge with video views
+    # NOTE: chose INNER join here
+    # otherwise NaN rows for views info
     final_df = pandas.merge(
         starts_df,
         views_info,
-        how="left",
+        how="inner",
         on="user_uid")
 
     # Merge with demographic information 
+    # NOTE: chose INNER join here
+    # otherwise NaN rows for meta info
     final_df = pandas.merge(
         final_df,
         subs_df,

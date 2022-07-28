@@ -61,11 +61,16 @@ def main():
         data_directory = data_dir
 
     if args.categories:
-        df = load_cleaned_dataset(cleaned_dataset_filepath)
+        df = load_cleaned_dataset(cleaned_dataset_cats_filepath)
         filename = "features_views_categories.parquet"
     else:
-        df = load_cleaned_dataset(cleaned_dataset_cats_filepath)
+        df = load_cleaned_dataset(cleaned_dataset_filepath)
         filename = "features_views_by_day.parquet"
+
+    # drop unwanted cols
+    # convert bools to ints
+    df = final_conversions(df)
+
     # Save dataset to parquet file within data dir
     features_dir = path.join(data_directory, "features")
     if not path.exists(features_dir):

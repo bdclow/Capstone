@@ -1,14 +1,24 @@
 import pandas
-from os import path
+import argparse
+from os import path, mkdir
 from src import *
 from tqdm import tqdm
 
 cleaned_dataset_filepath = "cleaned.parquet"
-nmf_classes_dataset_filepath = "nmf_classes.parquet"
+cleaned_dataset_cats_filepath = "cleaned_w_video_views_breakdowns.parquet"
 
-def load_cleaned_dataset() -> pandas.DataFrame:
-    filepath = path.join(data_dir, "cleaned", cleaned_dataset_filepath)
+def load_cleaned_dataset(file: str) -> pandas.DataFrame:
+    filepath = path.join(data_dir, "cleaned", file)
     return pandas.read_parquet(filepath)
+
+#def merge_dfs(
+#        cleaned_df: pandas.DataFrame, 
+#        other_df: pandas.DataFrame) -> pandas.DataFrame:
+#   return pandas.merge(
+#           cleaned_df,
+#           other_df,
+#           on="user_uid",
+#           how="left")
 
 def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
     df.drop(
@@ -33,5 +43,35 @@ def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
 
     return df
 
-print(df)
-print(df.columns)
+def main():
+    # take CLI arguments
+    parser = argparse.ArgumentParser(
+        allow_abbrev=True,
+        description='Create featureset for modeling')
+    parser.add_argument('--output_directory')
+    parser.add_argument('--categories',
+        action='store_true', 
+        help="whether to group video view info by categories")
+
+    args = parser.parse_args()
+
+    if args.output_directory:
+        data_directory = args.target_dir
+    else:
+        data_directory = data_dir
+
+    if args.categories:
+        df = load_cleaned_dataset(cleaned_dataset_filepath)
+        filename = "features_views_categories.parquet"
+    else:
+        df = load_cleaned_dataset(cleaned_dataset_cats_filepath)
+        filename = "features_views_by_day.parquet"
+    # Save dataset to parquet file within data dir
+    features_dir = path.join(data_directory, "features")
+    if not path.exists(features_dir):
+        mkdir(features_dir)
+    outfilepath = path.join(features_dir, filename)
+    df.to_parquet(outfilepath)
+    logging.info(f"Features dataset saved to {outfilepath}")
+
+main()

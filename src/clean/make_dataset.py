@@ -99,6 +99,7 @@ def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
             watchtime_by_subcategory["total_video_watchtime"]
 
     return watchtime_by_subcategory.reset_index()\
+            .fillna(0.0)\
             .rename(columns={
                 "uid": "user_uid",              # rename for consistency
                 "Other": "other_subcategory"})  # avoid conflict with payer source column

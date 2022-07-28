@@ -1,4 +1,8 @@
 
+featureset: cleaned_data
+	@. env/bin/activate; python -m src.features.make_featureset
+	@. env/bin/activate; python -m src.features.make_featureset --categories
+
 cleaned_data: data/cleaned/cleaned.parquet data/cleaned/cleaned_w_video_views_breakdowns.parquet
 
 data/cleaned/cleaned.parquet: | data/watch_time_by_trial_day.csv
@@ -29,9 +33,10 @@ update_requirements:
 	@echo "Install new pip packages"
 	@. env/bin/activate; pip install -r requirements.txt
 
-clean_cleaned:
-	rm -rf data/cleaned
-
-clean:
+clean: clean_artifacts
 	rm -rf env
+
+clean_artifacts:
 	rm -rf data/cleaned
+	rm -rf data/features
+

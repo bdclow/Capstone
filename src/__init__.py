@@ -1,4 +1,11 @@
 from os import path, pardir
+import logging
+
+# console logging setup
+logging.basicConfig(
+    format='%(asctime)s %(message)s',
+    encoding='utf-8',
+    level=logging.DEBUG)
 
 def parent_dir(directory: str):
     return path.abspath(path.join(directory, pardir))

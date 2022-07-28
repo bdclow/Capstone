@@ -77,6 +77,18 @@ countries_to_keep:
   - Canada
   - India
 
+video_views:
+  uid:
+    dtype: int32
+  class_id:
+    dtype: int32
+  video_duration:
+    dtype: float32
+  view_date:
+    dtype: datetime64[ns]
+  sum:
+    dtype: float32
+
 # Video watch times dataset
 watch_time_by_trial_day:
   user_uid:
@@ -109,58 +121,10 @@ watch_time_by_trial_day:
 
 classes:
   class_id:
-  class_title:
-  create_time:
-  description:
-  takeaway:
-  category:
+    dtype: int32
   subcategory:
-  status:
-  is_featured:
-  is_premium_only:
-  publish_time:
-  publish_date:
-  teacher_uid:
-  teacher_name:
+    dtype: object
   is_top_teacher:
-  teacher_create_time:
-  teacher_account_age:
-  is_original:
-  class_type:
-  quality_grade:
-  quality_grade_letter:
-  is_quality_class:
-  grade_note:
-  n_reviews:
-  review_avg:
-  level_id:
-  level:
-  has_been_staff_pick:
-  n_times_staff_pick:
-  first_staff_pick_time:
-  last_staff_pick_time:
-  has_project:
-  class_detail_page_link:
-  total_video_duration:
-  n_lessons:
-  trailer_duration:
-  first_lesson_duration:
-  class_display_name:
-  image_huge:
-  language:
-  language_grade_notes_1:
-  language_grade_notes_2:
-  language_grade_notes_3:
-  language_grade_notes_all:
+    dtype: bool
   has_non_english_content:
-  non_english_language_1:
-  class_origin:
-  class_origin_raw:
-  published_class_number:
-  teacher_first_publish_time:
-  is_last_published_class:
-    dtype: bool
-  is_first_original_class:
-    dtype: bool
-  is_first_quality_class:
     dtype: bool

@@ -1,6 +1,11 @@
 
+cleaned_data: data/cleaned/cleaned.parquet data/cleaned/cleaned_w_video_views_breakdowns.parquet
+
 data/cleaned/cleaned.parquet: | data/watch_time_by_trial_day.csv
 	@. env/bin/activate; python -m src.clean.make_dataset
+
+data/cleaned/cleaned_w_video_views_breakdowns.parquet:
+	@. env/bin/activate; python -m src.clean.make_dataset --categories
 
 data/watch_time_by_trial_day.csv: | data
 	@echo "Creating artifacts"

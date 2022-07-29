@@ -10,10 +10,14 @@
 
 ## To get started:
 + Install GNU make
->> make
++ Install python-virtualenv
+> make
 
 + To make sure data files up to date
->> make update_data
+> make update_data
+
++ To clean data intermediates
+> make clean_artifacts
 
 ## Goals
 ### Predict subscriptions, specifically who converts from a free trial to an initial subscription

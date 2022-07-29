@@ -4,21 +4,11 @@ from os import path, mkdir
 from src import *
 from tqdm import tqdm
 
-cleaned_dataset_filepath = "cleaned.parquet"
-cleaned_dataset_cats_filepath = "cleaned_w_video_views_breakdowns.parquet"
+cleaned_dataset = "cleaned.parquet"
 
 def load_cleaned_dataset(file: str) -> pandas.DataFrame:
     filepath = path.join(data_dir, "cleaned", file)
     return pandas.read_parquet(filepath)
-
-#def merge_dfs(
-#        cleaned_df: pandas.DataFrame, 
-#        other_df: pandas.DataFrame) -> pandas.DataFrame:
-#   return pandas.merge(
-#           cleaned_df,
-#           other_df,
-#           on="user_uid",
-#           how="left")
 
 def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
     df.drop(
@@ -40,7 +30,6 @@ def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
             df[column] = df[column].astype("int8")
         elif "float" in str(df[column].dtype):
             df[column] = df[column].fillna(0.0)
-
     return df
 
 def main():
@@ -48,10 +37,8 @@ def main():
     parser = argparse.ArgumentParser(
         allow_abbrev=True,
         description='Create featureset for modeling')
-    parser.add_argument('--output_directory')
-    parser.add_argument('--categories',
-        action='store_true', 
-        help="whether to group video view info by categories")
+    parser.add_argument('--output_directory', 
+        help="where to put file")
 
     args = parser.parse_args()
 
@@ -60,18 +47,14 @@ def main():
     else:
         data_directory = data_dir
 
-    if args.categories:
-        df = load_cleaned_dataset(cleaned_dataset_cats_filepath)
-        filename = "features_views_categories.parquet"
-    else:
-        df = load_cleaned_dataset(cleaned_dataset_filepath)
-        filename = "features_views_by_day.parquet"
+    df = load_cleaned_dataset(cleaned_dataset)
 
     # drop unwanted cols
     # convert bools to ints
     df = final_conversions(df)
 
     # Save dataset to parquet file within data dir
+    filename = "features.parquet"
     features_dir = path.join(data_directory, "features")
     if not path.exists(features_dir):
         mkdir(features_dir)

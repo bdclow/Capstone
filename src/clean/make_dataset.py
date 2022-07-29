@@ -105,20 +105,22 @@ def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
                 "Other": "other_subcategory"})  # avoid conflict with payer source column
 
 
-def combine_datasets(
-        config: dict, 
-        categories: bool
-    ) -> pandas.DataFrame:
+def combine_datasets(config: dict) -> pandas.DataFrame:
     '''
     Series of joins to make full cleaned dataset
     '''
-    if categories:
-        views_info = get_watchtime_by_subcategory(config)
-    else:
-        views_by_trial_day = DataSet(
-            "watch_time_by_trial_day.csv", 
-            config["watch_time_by_trial_day"])
-        views_info = views_by_trial_day.dataframe().fillna(0.0)
+    views_by_cat = get_watchtime_by_subcategory(config)
+    views_by_trial_day = DataSet(
+        "watch_time_by_trial_day.csv", 
+        config["watch_time_by_trial_day"])\
+            .dataframe()\
+            .fillna(0.0)
+    views_info = pandas.merge(
+        views_by_trial_day,
+        views_by_cat,
+        on="user_uid",
+        how="inner"
+    )
 
     # Subscription sign-ups/starts dataframe, starting point
     starts_df = open_starts_and_create_target(config)
@@ -161,10 +163,6 @@ def main():
         allow_abbrev=True,
         description='created cleaned dataset for modeling')
     parser.add_argument('--output_directory')
-    parser.add_argument('--categories',
-        action='store_true', 
-        help="whether to group video view info by categories")
-
     args = parser.parse_args()
 
     if args.output_directory:
@@ -177,14 +175,11 @@ def main():
     script_dir = parent_dir(script_path)
     config = load_config(path.join(script_dir, "dataset.yml"))
 
-    if args.categories:
-        logging.info("Adding on category info as well")
-        filename = "cleaned_w_video_views_breakdowns.parquet"
-    else:
-        filename = "cleaned.parquet"
+    logging.info("Adding on category info as well")
+    filename = "cleaned.parquet"
 
     # Load and combine datasets
-    cleaned_df = combine_datasets(config, args.categories)
+    cleaned_df = combine_datasets(config)
 
     # Save dataset to parquet file within data dir
     cleaned_dir = path.join(data_directory, "cleaned")

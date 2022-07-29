@@ -28,7 +28,7 @@ starts:
     dtype:  int8
     filter:
       - 7
-      - 13
+      - 31
   is_direct_to_paid:
     dtype: bool
     filter: False

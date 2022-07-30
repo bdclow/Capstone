@@ -56,7 +56,10 @@ def open_video_views(config: dict) -> pandas.DataFrame:
     return pandas.concat([vv.dataframe() 
         for vv in tqdm(video_views, desc="Loading video views dataset")])
 
-def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
+def get_watchtime_by_subcategory(
+        starts: pandas.DataFrame,
+        config: dict
+    ) -> pandas.DataFrame:
     '''
     Takes video view information and calculates average time spent
     in each subcategory ('Photography', 'Illustration', 'Culinary', 'Graphic Design',
@@ -68,7 +71,6 @@ def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
                     .dataframe()\
                     .reset_index()
 
-    video_views_df = open_video_views(config)
     # tack on class subcategory info onto video views
     video_views_df = pandas.merge(
         video_views_df.reset_index(),
@@ -87,8 +89,7 @@ def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
             values="sum")\
         .fillna(0.0)
 
-    # for memory purposes, immediately drop tables
-    del video_views_df
+    # for memory purposes, immediately drop table
     del classes
 
     watchtime_by_subcategory["total_video_watchtime"] = watchtime_by_subcategory.sum(axis=1)
@@ -104,12 +105,87 @@ def get_watchtime_by_subcategory(config: dict) -> pandas.DataFrame:
                 "uid": "user_uid",              # rename for consistency
                 "Other": "other_subcategory"})  # avoid conflict with payer source column
 
+def get_by_day_of_trial(
+    starts: pandas.DataFrame,
+    video_views: pandas.DataFrame,
+    config: dict
+) -> pandas.DataFrame:
+    '''
+    Group video views by day of trial
+    '''
+    # JOIN starts and views
+    account_and_views_info = pandas.merge(
+        starts,
+        video_views, 
+        left_on="user_uid",
+        right_on="uid",
+        how="left")
+
+    # Create column for watch data, corresponds to the day after trial start
+    account_and_views_info["day_of_trial"] = account_and_views_info.view_date - \
+        account_and_views_info.create_time
+    account_and_views_info.dropna(subset=["day_of_trial"], inplace=True)
+
+    # Cut back on DF size, only using these days anyway
+    account_and_views_info = account_and_views_info[
+        (account_and_views_info.day_of_trial.dt.days < 31) &
+        (account_and_views_info.day_of_trial.dt.days > 0)]
+
+    # Truncate day of trial from timedelta to just an integer
+    account_and_views_info.day_of_trial = account_and_views_info\
+            .day_of_trial.dt.days
+
+    # finally pivot days for both time watched (sum) and length of video
+    views_by_trial_day = account_and_views_info.groupby([
+        "user_uid",
+        "day_of_trial"])\
+        .agg({"sum": "sum", "video_duration": "sum"})\
+        .reset_index()\
+        .pivot(
+            index="user_uid",
+            columns="day_of_trial",
+            values=["sum", "video_duration"])
+    # Add trial length col back to pivoted table
+    views_by_trial_day = pd.merge(
+        views_by_trial_day.reset_index(),
+        starts[["trial_length_offer", "user_uid"]],
+        left_on="user_uid",
+        right_on="user_uid")
+
+    # Only use the first 3 days and the last 3 days of trial
+    days = [1, 2, 3, -3, -2, -1]
+
+    for d in days:
+        day = 
+        views_by_trial_day[f"day_{day}_total_watchtime"] = views_by_trial_day[(
+            'sum', day)]
+        views_by_trial_day[f"day_{day}_watched_video_length"] = views_by_trial_day[(
+            'video_duration', day)]
+
+    for day in last_days:
+        views_by_trial_day[f"day_{day}_total_watchtime"] = views_by_trial_day.apply(
+            lambda row: convert_cols(row, "sum", day), axis=1)
+        views_by_trial_day[f"day_{day}_watched_video_length"] = views_by_trial_day.apply(
+            lambda row: convert_cols(row, "video_duration", day), axis=1)
+
+    cols_to_keep = [col for col in views_by_trial_day.columns
+                    if "total_watchtime" in col or "video_length" in col]
+    cols_to_keep.insert(0, "user_uid")
+
+    return views_by_trial_day[cols_to_keep].fillna(0.0)
+
+
 
 def combine_datasets(config: dict) -> pandas.DataFrame:
     '''
     Series of joins to make full cleaned dataset
     '''
-    views_by_cat = get_watchtime_by_subcategory(config)
+    # Subscription sign-ups/starts dataframe, starting point
+    starts_df = open_starts_and_create_target(config)
+    video_views_df = open_video_views(config)
+    views_by_cat = get_watchtime_by_subcategory(video_views_df, config)
+    views_by_day = get_by_day_of_trial(starts_df, video_views_df, config)
+    del video_views_df
     views_by_trial_day = DataSet(
         "watch_time_by_trial_day.csv", 
         config["watch_time_by_trial_day"])\
@@ -122,8 +198,6 @@ def combine_datasets(config: dict) -> pandas.DataFrame:
         how="inner"
     )
 
-    # Subscription sign-ups/starts dataframe, starting point
-    starts_df = open_starts_and_create_target(config)
 
     # Load demographic data with OHEs, but only
     # keep english-speaking countries as otherwise

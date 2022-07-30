@@ -1,14 +1,15 @@
+'''
+Class to wrap our specific CSV datasets
+'''
 import pandas
-from datetime import datetime
-from os import path
 import logging
+from os import path
 from tqdm import tqdm
 from src import data_dir
 
-prefix = "skillshare_2022_"
-suffix = ".csv"
-date_format = "%Y-%m-%d %H:%M:%S"
-parse_dt = lambda dt_str: datetime.strptime(dt_str, date_format)
+PREFIX = "skillshare_2022_"
+SUFFIX = ".csv"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class DataSet:
     '''
@@ -20,12 +21,12 @@ class DataSet:
     filter method filters column by value
     '''
     def __init__(self, filepath: str, columns: dict, log: bool = True):
-        self.name = filepath.replace(prefix, "").replace(suffix, "")
+        self.name = filepath.replace(PREFIX, "").replace(SUFFIX, "")
         self.columns = columns
         self.filepath = path.join(data_dir, filepath)
         self.df = None
         self.log_output = log
-        
+
     def __repr__(self):
         return f"'{self.name}' dataset"
 
@@ -41,13 +42,13 @@ class DataSet:
             if self.log_output:
                 logging.info(f"Loading {self} to Pandas DataFrame")
             self.df = pandas.read_csv(
-                    self.filepath, 
-                    usecols=self.columns.keys(), 
+                    self.filepath,
+                    usecols=self.columns.keys(),
                     index_col=0)
             # Column datatype
             for column in self.df.columns:
                 if self.columns[column] == "datetime64[ns]":
-                    self.df[column] = pandas.to_datetime(self.df[column], format=date_format)
+                    self.df[column] = pandas.to_datetime(self.df[column], format=DATE_FORMAT)
                 if str(self.df[column].dtype) != self.columns[column]['dtype']:
                     # if column datatype not correct, set to correct type
                     if self.log_output:
@@ -62,7 +63,6 @@ class DataSet:
                                 self.columns[column]['dtype'])
                     except KeyError:
                         logging.error(f"dtype not specified for {column} column")
-        
         for column, item in self.columns.items():
             # apply filtering method based on configuration values
             try:
@@ -79,13 +79,12 @@ class DataSet:
                 dtype = value['dtype']
                 if dtype == "object":
                     df = pandas.merge(
-                        df.drop(column, axis=1), 
+                        df.drop(column, axis=1),
                         pandas.get_dummies(df[column]),
                         left_index=True,
                         right_index=True)
             return df
-        else:
-            return self.df
+        return self.df
 
     def filter(self, column, value):
         '''
@@ -95,7 +94,7 @@ class DataSet:
         '''
         if self.df is None:
             _ = self.dataframe()
-        if type(value) is list:
+        if isinstance(value, list):
             self.df = self.df[self.df[column].isin(value)]
         else:
             self.df = self.df[self.df[column] == value]

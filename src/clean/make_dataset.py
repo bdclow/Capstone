@@ -5,10 +5,10 @@ import argparse
 from os import path, mkdir
 import logging
 import yaml
+import pandas
 from src.clean.dataset import DataSet
 from src import data_dir, parent_dir
-import pandas
-from tqdm import tqdm, tqdm_pandas
+from tqdm import tqdm
 
 pandas.options.mode.chained_assignment = None
 
@@ -20,7 +20,7 @@ def load_config(filepath: str) -> dict:
     Optional filter parameter as well 
         (filters based on matching of value)
     '''
-    with open(filepath, "r") as file:
+    with open(filepath, "r", encoding="utf-8") as file:
         return yaml.safe_load(file)
 
 def open_starts_and_create_target(config: dict) -> pandas.DataFrame:
@@ -75,7 +75,6 @@ def open_video_views(config: dict) -> pandas.DataFrame:
         for vv in tqdm(video_views, desc="Loading video views dataset")])
 
 def get_watchtime_by_subcategory(
-        starts: pandas.DataFrame,
         video_views: pandas.DataFrame,
         config: dict
     ) -> pandas.DataFrame:
@@ -85,7 +84,7 @@ def get_watchtime_by_subcategory(
     'Graphic Design', 'Marketing', 'Creative Writing', etc)
     '''
     classes = DataSet(
-            "skillshare_2022_classes.csv", 
+            "skillshare_2022_classes.csv",
             config["classes"])\
                     .dataframe()\
                     .reset_index()
@@ -111,7 +110,9 @@ def get_watchtime_by_subcategory(
     # for memory purposes, immediately drop table
     del classes
 
-    watchtime_by_subcategory["total_video_watchtime"] = watchtime_by_subcategory.sum(axis=1)
+    # Sum for total watchtime
+    watchtime_by_subcategory["total_video_watchtime"] = watchtime_by_subcategory\
+            .sum(axis=1)
 
     # Convert to percentage
     for col in watchtime_by_subcategory.columns[:-2]:
@@ -120,6 +121,7 @@ def get_watchtime_by_subcategory(
 
     return watchtime_by_subcategory.reset_index()\
             .fillna(0.0)\
+            .drop(columns="total_video_watchtime")\
             .rename(columns={
                 "uid": "user_uid",              # rename for consistency
                 "Other": "other_subcategory"})  # avoid conflict with payer source column
@@ -137,7 +139,7 @@ def get_by_day_of_trial(
     # JOIN starts and views
     account_and_views_info = pandas.merge(
         starts,
-        video_views, 
+        video_views,
         left_on="user_uid",
         right_on="uid",
         how="left")
@@ -175,7 +177,7 @@ def get_by_day_of_trial(
         right_on="user_uid")
 
     # Only use the first 3 days and the last 3 days of trial
-    days = [1, 2, 3] 
+    days = [1, 2, 3]
     last_days = [-3, -2, -1]
 
     for day in days:
@@ -209,7 +211,7 @@ def combine_datasets(config: dict) -> pandas.DataFrame:
     # Subscription sign-ups/starts dataframe, starting point
     starts_df = open_starts_and_create_target(config)
     video_views_df = open_video_views(config)
-    views_by_cat = get_watchtime_by_subcategory(starts_df, video_views_df, config)
+    views_by_cat = get_watchtime_by_subcategory(video_views_df, config)
     views_by_day = get_by_day_of_trial(starts_df, video_views_df)
 
     del video_views_df

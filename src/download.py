@@ -1,8 +1,13 @@
+'''
+Downloads CSV files from Google Drive
+    alternative target directory can be specified
+    alternative Drive folder ID can be specified
+'''
+import argparse
+import os
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from tqdm import tqdm
-import argparse
-import os
 from src import data_dir
 
 
@@ -15,7 +20,7 @@ def download_data(drive_folder_id, target_dir, force_redownload):
 
     drive = GoogleDrive(google_auth)
     file_list = drive.ListFile({
-        'q': f"'{drive_folder_id}' in parents and trashed=false", 
+        'q': f"'{drive_folder_id}' in parents and trashed=false",
         'includeItemsFromAllDrives': True})\
         .GetList()
 
@@ -24,27 +29,32 @@ def download_data(drive_folder_id, target_dir, force_redownload):
         os.mkdir(target_dir)
 
     # Get list of existing files in that directory
-    existing_files = [dir_entry.name 
-            for dir_entry in os.scandir(target_dir) 
+    existing_files = [dir_entry.name
+            for dir_entry in os.scandir(target_dir)
             if dir_entry.is_file()]
 
     # Loop through CSV files, and download if needed
     for file in (prog_bar := tqdm(file_list, ncols=100)):
-        if file['mimeType'] == 'text/csv': 
+        if file['mimeType'] == 'text/csv':
             if force_redownload or (file['title'] not in existing_files):
                 destination = os.path.join(target_dir, file['title'])
-                prog_bar.set_description(f"Downloading {file['title']}") 
+                prog_bar.set_description(f"Downloading {file['title']}")
                 file.GetContentFile(destination)
 
 def main():
+    '''
+    Take CLI arguments
+    Download CSVs
+    '''
     parser = argparse.ArgumentParser(
             allow_abbrev=True,
             description='Download project data files via Google Drive API')
     parser.add_argument('--target_dir')
     parser.add_argument('--drive_folder_id')
-    parser.add_argument('--force', 
-            action='store_true', 
-            help="Whether to force redownload all, defaults to only downloading files that don't exist")
+    parser.add_argument('--force',
+            action='store_true',
+            help="Whether to force redownload all, "\
+                    "defaults to only downloading files that don't exist")
 
     args = parser.parse_args()
     if args.drive_folder_id:

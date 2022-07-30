@@ -8,7 +8,8 @@ import yaml
 from src.clean.dataset import DataSet
 from src import data_dir, parent_dir
 import pandas
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_pandas
+
 pandas.options.mode.chained_assignment = None
 
 
@@ -41,15 +42,32 @@ def open_starts_and_create_target(config: dict) -> pandas.DataFrame:
 
     return starts_df
 
+
+def convert_cols(
+        row: pandas.Series, 
+        prev_col: str, 
+        day: int
+    ) -> pandas.Series:
+    '''
+    Wrapper to figure out relative day of trial
+        day in integer form, takes negative days / indexes
+        (e.g. takes "-1" and returns 6 if trial length 7)
+    '''
+    day_converted = row["trial_length_days"] + day
+    return row[(prev_col, day_converted)]
+
+
 def open_video_views(config: dict) -> pandas.DataFrame:
     '''
     Open all 62 files with video view information
     Ensures correct data types for columns
-    Returns concatenate whole for dataset as Pandas DF
+    Returns concatenated whole for dataset as Pandas DF
     '''
     video_views = [
-            DataSet(f"skillshare_2022_vviews_{i}.csv",
-                config["video_views"])
+            DataSet(
+                f"skillshare_2022_vviews_{i}.csv",
+                config["video_views"],
+                log=False)
             for i in range(0, 63)
             # files are numbered from 0 to 62
     ]
@@ -58,12 +76,13 @@ def open_video_views(config: dict) -> pandas.DataFrame:
 
 def get_watchtime_by_subcategory(
         starts: pandas.DataFrame,
+        video_views: pandas.DataFrame,
         config: dict
     ) -> pandas.DataFrame:
     '''
     Takes video view information and calculates average time spent
-    in each subcategory ('Photography', 'Illustration', 'Culinary', 'Graphic Design',
-       'Marketing', 'Creative Writing', etc)
+    in each subcategory ('Photography', 'Illustration', 'Culinary', 
+    'Graphic Design', 'Marketing', 'Creative Writing', etc)
     '''
     classes = DataSet(
             "skillshare_2022_classes.csv", 
@@ -72,13 +91,13 @@ def get_watchtime_by_subcategory(
                     .reset_index()
 
     # tack on class subcategory info onto video views
-    video_views_df = pandas.merge(
-        video_views_df.reset_index(),
+    video_views = pandas.merge(
+        video_views.reset_index(),
         classes[["class_id", "subcategory"]],
         on="class_id",
         how="left")
 
-    watchtime_by_subcategory = video_views_df.groupby([
+    watchtime_by_subcategory = video_views.groupby([
         "uid",
         "subcategory"])\
         .sum()["sum"]\
@@ -105,10 +124,12 @@ def get_watchtime_by_subcategory(
                 "uid": "user_uid",              # rename for consistency
                 "Other": "other_subcategory"})  # avoid conflict with payer source column
 
+# Progress bar for pandas .apply()
+tqdm.pandas(desc="Converting day of trial to relative day")
+
 def get_by_day_of_trial(
     starts: pandas.DataFrame,
-    video_views: pandas.DataFrame,
-    config: dict
+    video_views: pandas.DataFrame
 ) -> pandas.DataFrame:
     '''
     Group video views by day of trial
@@ -145,28 +166,33 @@ def get_by_day_of_trial(
             index="user_uid",
             columns="day_of_trial",
             values=["sum", "video_duration"])
+
     # Add trial length col back to pivoted table
-    views_by_trial_day = pd.merge(
+    views_by_trial_day = pandas.merge(
         views_by_trial_day.reset_index(),
-        starts[["trial_length_offer", "user_uid"]],
+        starts[["trial_length_days", "user_uid"]],
         left_on="user_uid",
         right_on="user_uid")
 
     # Only use the first 3 days and the last 3 days of trial
-    days = [1, 2, 3, -3, -2, -1]
+    days = [1, 2, 3] 
+    last_days = [-3, -2, -1]
 
-    for d in days:
-        day = 
-        views_by_trial_day[f"day_{day}_total_watchtime"] = views_by_trial_day[(
+    for day in days:
+        views_by_trial_day[f"total_watchtime_day_{day}"] = views_by_trial_day[(
             'sum', day)]
-        views_by_trial_day[f"day_{day}_watched_video_length"] = views_by_trial_day[(
+        views_by_trial_day[f"watched_video_length_day_{day}"] = views_by_trial_day[(
             'video_duration', day)]
 
     for day in last_days:
-        views_by_trial_day[f"day_{day}_total_watchtime"] = views_by_trial_day.apply(
-            lambda row: convert_cols(row, "sum", day), axis=1)
-        views_by_trial_day[f"day_{day}_watched_video_length"] = views_by_trial_day.apply(
-            lambda row: convert_cols(row, "video_duration", day), axis=1)
+        views_by_trial_day[f"total_watchtime_day_{day}"] = views_by_trial_day\
+                .progress_apply(
+                    lambda row: convert_cols(row, "sum", day), 
+                    axis=1)
+        views_by_trial_day[f"watched_video_length_day_{day}"] = views_by_trial_day\
+                .progress_apply(
+                    lambda row: convert_cols(row, "video_duration", day), 
+                    axis=1)
 
     cols_to_keep = [col for col in views_by_trial_day.columns
                     if "total_watchtime" in col or "video_length" in col]
@@ -183,21 +209,16 @@ def combine_datasets(config: dict) -> pandas.DataFrame:
     # Subscription sign-ups/starts dataframe, starting point
     starts_df = open_starts_and_create_target(config)
     video_views_df = open_video_views(config)
-    views_by_cat = get_watchtime_by_subcategory(video_views_df, config)
-    views_by_day = get_by_day_of_trial(starts_df, video_views_df, config)
+    views_by_cat = get_watchtime_by_subcategory(starts_df, video_views_df, config)
+    views_by_day = get_by_day_of_trial(starts_df, video_views_df)
+
     del video_views_df
-    views_by_trial_day = DataSet(
-        "watch_time_by_trial_day.csv", 
-        config["watch_time_by_trial_day"])\
-            .dataframe()\
-            .fillna(0.0)
     views_info = pandas.merge(
-        views_by_trial_day,
+        views_by_day,
         views_by_cat,
         on="user_uid",
         how="inner"
     )
-
 
     # Load demographic data with OHEs, but only
     # keep english-speaking countries as otherwise
@@ -249,13 +270,13 @@ def main():
     script_dir = parent_dir(script_path)
     config = load_config(path.join(script_dir, "dataset.yml"))
 
-    logging.info("Adding on category info as well")
-    filename = "cleaned.parquet"
+    logging.info("LOADING DATASETS, JOINING...")
 
     # Load and combine datasets
     cleaned_df = combine_datasets(config)
 
     # Save dataset to parquet file within data dir
+    filename = "cleaned.parquet"
     cleaned_dir = path.join(data_directory, "cleaned")
     if not path.exists(cleaned_dir):
         mkdir(cleaned_dir)

@@ -19,11 +19,12 @@ class DataSet:
     dataframe method returns Pandas DF
     filter method filters column by value
     '''
-    def __init__(self, filepath: str, columns: dict):
+    def __init__(self, filepath: str, columns: dict, log: bool = True):
         self.name = filepath.replace(prefix, "").replace(suffix, "")
         self.columns = columns
         self.filepath = path.join(data_dir, filepath)
         self.df = None
+        self.log_output = log
         
     def __repr__(self):
         return f"'{self.name}' dataset"
@@ -37,7 +38,8 @@ class DataSet:
         '''
         if self.df is None:
             # If DF not loaded yet, load
-            logging.info(f"Loading {self} to Pandas DataFrame")
+            if self.log_output:
+                logging.info(f"Loading {self} to Pandas DataFrame")
             self.df = pandas.read_csv(
                     self.filepath, 
                     usecols=self.columns.keys(), 
@@ -48,10 +50,11 @@ class DataSet:
                     self.df[column] = pandas.to_datetime(self.df[column], format=date_format)
                 if str(self.df[column].dtype) != self.columns[column]['dtype']:
                     # if column datatype not correct, set to correct type
-                    logging.info(
-                            f"""converting datatype of {column} """
-                            f"""from {self.df[column].dtype} """
-                            f"""to {self.columns[column]['dtype']} for {self}""")
+                    if self.log_output:
+                        logging.info(
+                                f"""converting datatype of {column} """
+                                f"""from {self.df[column].dtype} """
+                                f"""to {self.columns[column]['dtype']} for {self}""")
                     try:
                         if "int" in self.columns[column]['dtype']:
                             self.df = self.df.dropna(subset=column)
@@ -70,7 +73,8 @@ class DataSet:
         if one_hot_categories:
             # if one hot encoding needed, create necessary cols
             df = self.df.copy()
-            logging.info("Creating one-hot encodings")
+            if self.log_output:
+                logging.info("Creating one-hot encodings")
             for column, value in tqdm(self.columns.items()):
                 dtype = value['dtype']
                 if dtype == "object":

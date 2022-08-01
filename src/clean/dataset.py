@@ -73,9 +73,8 @@ class DataSet:
         if one_hot_categories:
             # if one hot encoding needed, create necessary cols
             df = self.df.copy()
-            if self.log_output:
-                logging.info("Creating one-hot encodings")
-            for column, value in tqdm(self.columns.items()):
+            for column, value in tqdm(self.columns.items(), 
+                    desc="Creating one-hot encodings"):
                 dtype = value['dtype']
                 if dtype == "object":
                     df = pandas.merge(

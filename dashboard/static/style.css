@@ -1,0 +1,9 @@
+.inline-block {
+  /* display: inline-block; */
+   display: flex;
+}
+
+#header {
+    margin: 20px;
+    text-align: center;
+}

@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    logo_image = os.path.join("static", "logo.jpg")
+    logo_image = os.path.join("static", "blue_logo.png")
     return render_template("index.html", logo_image=logo_image)
 
 if __name__ == '__main__':

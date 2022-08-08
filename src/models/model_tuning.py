@@ -1,5 +1,4 @@
 import pandas
-import argparse
 from tqdm import tqdm
 from os import path, mkdir
 from src import *
@@ -40,6 +39,7 @@ def tune_model(X_train, y_train):
             param_grid = param_test1, 
             scoring='roc_auc', 
             verbose=4,
+            n_jobs=-1,
             cv=5)
 
     gsearch1.fit(X_train,y_train)
@@ -53,6 +53,7 @@ def tune_model(X_train, y_train):
             param_grid = param_test2, 
             scoring='roc_auc', 
             verbose=4,
+            n_jobs=-1,
             cv=5)
 
     gsearch2.fit(X_train, y_train)
@@ -71,6 +72,7 @@ def tune_model(X_train, y_train):
             param_grid = param_test3, 
             scoring='roc_auc', 
             verbose=4,
+            n_jobs=-1,
             cv=5)
 
     gsearch3.fit(X_train,y_train)

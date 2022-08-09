@@ -41,19 +41,20 @@ def tune_model(X_train, y_train, Estimator):
     returns best model parameters
     '''
 
-    param_test1 = {
+    param_grid = {
             'n_estimators': range(50, 251, 50),
+            'min_samples_leaf':range(1,11,2),
             'max_depth':range(5,8)} 
     if Estimator is XGBClassifier:
-        param_test1["reg_alpha"] = [0.1, 0.3, 0.6]
-        param_test1["learning_rate"] = [0.05, 0.10, 0.15, 0.3]
+        param_grid["reg_alpha"] = [0.1, 0.3, 0.6]
+        param_grid["learning_rate"] = [0.05, 0.10, 0.15, 0.3]
     else:
-        param_test1["min_samples_split"] = range(2,11,2)
+        param_grid["min_samples_split"] = range(2,11,2)
 
     gsearch1 = GridSearchCV(
             estimator = Estimator(
                 random_state=RANDOM_SEED),
-            param_grid = param_test1, 
+            param_grid = param_grid, 
             scoring='precision', 
             verbose=4,
             n_jobs=-1,
@@ -61,49 +62,8 @@ def tune_model(X_train, y_train, Estimator):
 
     gsearch1.fit(X_train,y_train)
     best_params = gsearch1.best_params_
-    n_estimators = best_params['n_estimators']
-    for param in param_test1.keys():
+    for param in param_grid.keys():
         logging.info(f"Best {param} : {best_params[param]}")
-    
-    #param_test2 = {
-    #        'max_depth':range(5,8), 
-    #        'min_samples_split':range(2,11,2)}
-
-    #gsearch2 = GridSearchCV(
-    #        estimator = Estimator(
-    #            n_estimators=n_estimators, 
-    #            **additional_args,
-    #            random_state=RANDOM_SEED), 
-    #        param_grid = param_test2, 
-    #        scoring='precision', 
-    #        verbose=4,
-    #        n_jobs=-1,
-    #        cv=5)
-
-    #gsearch2.fit(X_train, y_train)
-    #best_params2 = gsearch2.best_params_
-    #max_depth = best_params2['max_depth']
-    #min_samples_split = best_params2['min_samples_split']
-    #logging.info(f"Best max_depth, min_samples: {max_depth} {min_samples_split}")
-    #
-    #param_test3 = {'min_samples_leaf':range(1,11,2)}
-
-    #gsearch3 = GridSearchCV(
-    #        estimator = Estimator(
-    #            n_estimators=n_estimators,
-    #            max_depth=max_depth, 
-    #            min_samples_split=min_samples_split, 
-    #            random_state=RANDOM_SEED,
-    #            **additional_args), 
-    #        param_grid = param_test3, 
-    #        scoring='precision', 
-    #        verbose=4,
-    #        n_jobs=-1,
-    #        cv=5)
-
-    #gsearch3.fit(X_train,y_train)
-    #best_params3 = gsearch3.best_params_
-    #min_samples_leaf = best_params3['min_samples_leaf']
     
     return best_params
 

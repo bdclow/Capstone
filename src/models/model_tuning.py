@@ -162,6 +162,8 @@ def main():
             logging_text = []
             logging_text.append(f"model_{Estimator.__name__}_{trial_length}\n")
             logging_text.append("----------------------\n")
+            for param, value in best_params.items():
+                logging_text.append(f"Best {param}: {value}\n")
             logging_text.append(f"Model accuracy: {accuracy}\n")
             logging_text.append(f"Model F1-score: {f1_score}\n")
             logging_text.append(f"Model recall: {recall}\n")

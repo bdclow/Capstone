@@ -10,3 +10,4 @@ sklearn==0.0
 statsmodels==0.13.2
 tqdm==4.64.0
 vaderSentiment==3.3.2
+xgboost==1.6.1

@@ -1,0 +1,23 @@
+model_RandomForestClassifier_week----------------------
+Model accuracy: 0.6303265631222621
+Model F1-score: [0.77325191 0.        ]
+Model recall: [1. 0.]
+Model precision: [0.63032656 0.        ]
+
+model_RandomForestClassifier_month----------------------
+Model accuracy: 0.7420317942539874
+Model F1-score: [0.84773065 0.15653365]
+Model recall: [0.93586593 0.10287001]
+Model precision: [0.77476688 0.32724669]
+
+model_XGBClassifier_week----------------------
+Model accuracy: 0.6295300677021107\
+Model F1-score: [0.77245765 0.00374833]
+Model recall: [0.99763071 0.00188527]
+Model precision: [0.63021353 0.31818182]
+
+model_XGBClassifier_month----------------------
+Model accuracy: 0.7671738731896394
+Model F1-score: [8.68245546e-01 2.24921278e-04]
+Model recall: [9.99795208e-01 1.12549240e-04]
+Model precision: [0.76728835 0.14285714]

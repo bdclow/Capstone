@@ -9,6 +9,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import class_weight
 from sklearn.metrics import precision_recall_fscore_support
+from xgboost import XGBClassifier
 import pickle
 
 RANDOM_SEED=42
@@ -33,19 +34,27 @@ def separate_trials(df) -> tuple:
     logging.info(f"NUMBER OF MONTH LONG TRIALS = {len(month_trials)}")
     return week_trials, month_trials
 
-def tune_model(X_train, y_train):
+def tune_model(X_train, y_train, Estimator):
     '''
     takes training data
     fits RFC
     returns best model parameters
     '''
 
-    param_test1 = {'n_estimators': range(50, 251, 50)}
+    param_test1 = {
+            'n_estimators': range(50, 251, 50),
+            'max_depth':range(5,8)} 
+    if Estimator is XGBClassifier:
+        param_test1["reg_alpha"] = [0.1, 0.3, 0.6]
+        param_test1["learning_rate"] = [0.05, 0.10, 0.15, 0.3]
+    else:
+        param_test1["min_samples_split"] = range(2,11,2)
 
     gsearch1 = GridSearchCV(
-            estimator = RandomForestClassifier(random_state=RANDOM_SEED), 
+            estimator = Estimator(
+                random_state=RANDOM_SEED),
             param_grid = param_test1, 
-            scoring='roc_auc', 
+            scoring='precision', 
             verbose=4,
             n_jobs=-1,
             cv=5)
@@ -53,46 +62,50 @@ def tune_model(X_train, y_train):
     gsearch1.fit(X_train,y_train)
     best_params = gsearch1.best_params_
     n_estimators = best_params['n_estimators']
-    logging.info(f"Best n_estimators: {n_estimators}")
+    for param in param_test1.keys():
+        logging.info(f"Best {param} : {best_params[param]}")
     
-    param_test2 = {
-            'max_depth':range(5,8), 
-            'min_samples_split':range(2,11,2)}
+    #param_test2 = {
+    #        'max_depth':range(5,8), 
+    #        'min_samples_split':range(2,11,2)}
 
-    gsearch2 = GridSearchCV(
-            estimator = RandomForestClassifier(n_estimators=n_estimators, random_state=RANDOM_SEED), 
-            param_grid = param_test2, 
-            scoring='roc_auc', 
-            verbose=4,
-            n_jobs=-1,
-            cv=5)
+    #gsearch2 = GridSearchCV(
+    #        estimator = Estimator(
+    #            n_estimators=n_estimators, 
+    #            **additional_args,
+    #            random_state=RANDOM_SEED), 
+    #        param_grid = param_test2, 
+    #        scoring='precision', 
+    #        verbose=4,
+    #        n_jobs=-1,
+    #        cv=5)
 
-    gsearch2.fit(X_train, y_train)
-    best_params2 = gsearch2.best_params_
-    max_depth = best_params2['max_depth']
-    min_samples_split = best_params2['min_samples_split']
-    logging.info(f"Best max_depth, min_samples: {max_depth} {min_samples_split}")
+    #gsearch2.fit(X_train, y_train)
+    #best_params2 = gsearch2.best_params_
+    #max_depth = best_params2['max_depth']
+    #min_samples_split = best_params2['min_samples_split']
+    #logging.info(f"Best max_depth, min_samples: {max_depth} {min_samples_split}")
+    #
+    #param_test3 = {'min_samples_leaf':range(1,11,2)}
+
+    #gsearch3 = GridSearchCV(
+    #        estimator = Estimator(
+    #            n_estimators=n_estimators,
+    #            max_depth=max_depth, 
+    #            min_samples_split=min_samples_split, 
+    #            random_state=RANDOM_SEED,
+    #            **additional_args), 
+    #        param_grid = param_test3, 
+    #        scoring='precision', 
+    #        verbose=4,
+    #        n_jobs=-1,
+    #        cv=5)
+
+    #gsearch3.fit(X_train,y_train)
+    #best_params3 = gsearch3.best_params_
+    #min_samples_leaf = best_params3['min_samples_leaf']
     
-    param_test3 = {'min_samples_leaf':range(1,11,2)}
-
-    gsearch3 = GridSearchCV(
-            estimator = RandomForestClassifier(
-                n_estimators=n_estimators,
-                max_depth=max_depth, 
-                min_samples_split=min_samples_split, 
-                random_state=RANDOM_SEED), 
-            param_grid = param_test3, 
-            scoring='roc_auc', 
-            verbose=4,
-            n_jobs=-1,
-            cv=5)
-
-    gsearch3.fit(X_train,y_train)
-    best_params3 = gsearch3.best_params_
-    min_samples_leaf = best_params3['min_samples_leaf']
-    logging.info(f"Best min samples leaf: {min_samples_leaf}")
-    
-    return n_estimators, max_depth, min_samples_split, min_samples_leaf
+    return best_params
 
 
 def main():
@@ -102,7 +115,7 @@ def main():
     # One for week-long trials
     # another for month-long trials
     week_trials, month_trials = separate_trials(features)
-    model_types = ["week", "month"]
+    trial_lengths = ["week", "month"]
     split_features = [week_trials, month_trials]
 
     # Create directory for pickled models
@@ -110,58 +123,63 @@ def main():
     if not path.exists(save_model_dir):
         mkdir(save_model_dir)
 
-    for split_of_featureset, model_type in tqdm(
-            zip(split_features, model_types),
-            total=len(split_features),
-            desc="TRAINING RANDOM FOREST CLASSIERS"):
+    estimators = [RandomForestClassifier, XGBClassifier]
 
-        model = RandomForestClassifier()
-        X_train, y_train, X_test, y_test = preprocess_data(split_of_featureset)
+    for Estimator in estimators:
+        for split_of_featureset, trial_length in tqdm(
+                zip(split_features, trial_lengths),
+                total=len(split_features),
+                desc=f"TRAINING {Estimator.__name__}"):
 
-        n_estimators, max_depth, min_samples_split, min_samples_leaf = tune_model(X_train, y_train)
+            model = Estimator()
+            X_train, y_train, X_test, y_test = preprocess_data(split_of_featureset)
 
-        logging.info("Grid Search Results")
-        logging.info("----------------------")
-        logging.info(f"For {model_type}, using:")
-        logging.info(f"number of decision trees: {n_estimators}")
-        logging.info(f"max tree depth: {max_depth}")
-        logging.info(f"minimum samples needed to split node: {min_samples_split}")
-        logging.info(f"minimum samples needed at leaf node: {min_samples_leaf}")
+            #n_estimators, max_depth, min_samples_split, min_samples_leaf 
+            best_params = tune_model(X_train, y_train, Estimator)
 
-        # Calculate class weights for imbalanced dataset
-        classes=np_unique(y_train)
-        class_weights = class_weight.compute_class_weight(
-                'balanced',
-                classes=classes,
-                y=y_train)
-        class_weights = dict(zip(classes, class_weights))
-        
-        model = RandomForestClassifier(
-                n_estimators=n_estimators,
-                min_samples_split=min_samples_split,
-                max_depth=max_depth,
-                min_samples_leaf=min_samples_leaf,
-                class_weight=class_weights,
-                random_state=RANDOM_SEED)
+            # Calculate class weights for imbalanced dataset
+            classes=np_unique(y_train)
+            class_weights = class_weight.compute_class_weight(
+                    'balanced',
+                    classes=classes,
+                    y=y_train)
+            class_weights = dict(zip(classes, class_weights))
+            
+            model = Estimator(
+                    **best_params,
+                    class_weight=class_weights,
+                    random_state=RANDOM_SEED)
 
-        logging.info(f"Fitting final model")
-        model.fit(X_train, y_train)
+            logging.info(f"Fitting final model")
+            model.fit(X_train, y_train)
 
-        accuracy = model.score(
-            X_test.values, 
-            y_test.values)
-        y_pred = model.predict(X_test.values)
-        precision, recall, f1_score, _support = precision_recall_fscore_support(y_test, y_pred)
+            accuracy = model.score(
+                X_test.values, 
+                y_test.values)
+            y_pred = model.predict(X_test.values)
+            precision, recall, f1_score, _support = precision_recall_fscore_support(y_test, y_pred)
 
-        logging.info("----------------------")
-        logging.info(f"Model accuracy: {accuracy}")
-        logging.info(f"Model F1-score: {f1_score}")
-        logging.info(f"Model recall: {recall}")
-        logging.info(f"Model precision: {precision}")
-        
-        # Save model
-        modelpath = path.join(save_model_dir, f"model_{model_type}")
-        with open(modelpath, 'wb') as picklefile:
-            pickle.dump(model, picklefile)
+            logging_text = []
+            logging_text.append(f"model_{Estimator.__name__}_{trial_length}\n")
+            logging_text.append("----------------------\n")
+            logging_text.append(f"Model accuracy: {accuracy}\n")
+            logging_text.append(f"Model F1-score: {f1_score}\n")
+            logging_text.append(f"Model recall: {recall}\n")
+            logging_text.append(f"Model precision: {precision}\n\n")
+
+            for text in logging_text:
+                logging.info(text)
+            
+            # Save model and metainfo
+            modelpath = path.join(
+                    save_model_dir, 
+                    f"model_{Estimator.__name__}_{trial_length}.pkl")
+
+            modelinfopath = path.join(save_model_dir, "meta_info.txt")
+
+            with open(modelinfopath, 'a') as metafile:
+                metafile.writelines(logging_text)
+            with open(modelpath, 'wb') as picklefile:
+                pickle.dump(model, picklefile)
 
 main()

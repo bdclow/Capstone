@@ -1,8 +1,10 @@
 randomforest: data/features/features.parquet
 	@. env/bin/activate; python -m src.models.model_tuning
 
-featureset: cleaned_data data/features/features.parquet
+data/features/features.parquet: featureset
 	@. env/bin/activate; python -m src.features.make_featureset
+
+featureset: cleaned_data 
 
 cleaned_data: data/cleaned/cleaned.parquet data/cleaned/cleaned.parquet
 

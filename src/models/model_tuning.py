@@ -17,6 +17,7 @@ def load_featureset(file: str) -> pandas.DataFrame:
 def preprocess_data(df) -> tuple:
     X = df.drop(["success"], axis = 1)
     y = df['success']
+    logging.info(f"DF SIZE::::::: {len(X)}")
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=RANDOM_SEED)
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -25,6 +26,8 @@ def preprocess_data(df) -> tuple:
 def separate_trials(df) -> tuple:
     week_trials = df[df['trial_length_days'] == 7]
     month_trials = df[df['trial_length_days'] == 31]
+    logging.info(f"NUMBER OF WEEK LONG TRIALS = {len(week_trials)}")
+    logging.info(f"NUMBER OF MONTH LONG TRIALS = {len(month_trials)}")
     return week_trials, month_trials
 
 def tune_model(X_train, y_train):
@@ -33,7 +36,9 @@ def tune_model(X_train, y_train):
     fits RFC
     returns best model parameters
     '''
+
     param_test1 = {'n_estimators': range(50, 251, 50)}
+
     gsearch1 = GridSearchCV(
             estimator = RandomForestClassifier(random_state=RANDOM_SEED), 
             param_grid = param_test1, 
@@ -47,7 +52,10 @@ def tune_model(X_train, y_train):
     n_estimators = best_params['n_estimators']
     logging.info(f"Best n_estimators: {n_estimators}")
     
-    param_test2 = {'max_depth':range(1,18,4), 'min_samples_split':range(2,11,2)}
+    param_test2 = {
+            'max_depth':range(1,18,4), 
+            'min_samples_split':range(2,11,2)}
+
     gsearch2 = GridSearchCV(
             estimator = RandomForestClassifier(n_estimators=n_estimators, random_state=RANDOM_SEED), 
             param_grid = param_test2, 
@@ -63,6 +71,7 @@ def tune_model(X_train, y_train):
     logging.info(f"Best max_depth, min_samples: {max_depth} {min_samples_split}")
     
     param_test3 = {'min_samples_leaf':range(1,11,2)}
+
     gsearch3 = GridSearchCV(
             estimator = RandomForestClassifier(
                 n_estimators=n_estimators,

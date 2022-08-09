@@ -39,4 +39,5 @@ clean: clean_artifacts
 clean_artifacts:
 	rm -rf data/cleaned
 	rm -rf data/features
+	rm -rf saved_models
 

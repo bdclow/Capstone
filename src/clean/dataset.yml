@@ -124,6 +124,8 @@ classes:
     dtype: int32
   subcategory:
     dtype: object
+  description:
+    dtype: object
   is_top_teacher:
     dtype: bool
   has_non_english_content:

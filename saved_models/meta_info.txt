@@ -1,23 +1,46 @@
-model_RandomForestClassifier_week----------------------
+model_RandomForestClassifier_week
+----------------------
+Best max_depth: 5
+Best min_samples_leaf: 7
+Best min_samples_split: 2
+Best n_estimators: 100
 Model accuracy: 0.6303265631222621
 Model F1-score: [0.77325191 0.        ]
 Model recall: [1. 0.]
 Model precision: [0.63032656 0.        ]
 
-model_RandomForestClassifier_month----------------------
-Model accuracy: 0.7420317942539874
-Model F1-score: [0.84773065 0.15653365]
-Model recall: [0.93586593 0.10287001]
-Model precision: [0.77476688 0.32724669]
+model_RandomForestClassifier_month
+----------------------
+Best max_depth: 7
+Best min_samples_leaf: 1
+Best min_samples_split: 2
+Best n_estimators: 50
+Model accuracy: 0.7041353481916036
+Model F1-score: [0.81632985 0.23972003]
+Model recall: [0.85688443 0.2004502 ]
+Model precision: [0.77944053 0.29812521]
 
-model_XGBClassifier_week----------------------
-Model accuracy: 0.6295300677021107\
-Model F1-score: [0.77245765 0.00374833]
-Model recall: [0.99763071 0.00188527]
-Model precision: [0.63021353 0.31818182]
+model_XGBClassifier_week
+----------------------
+Best learning_rate: 0.05
+Best max_depth: 5
+Best min_samples_leaf: 1
+Best n_estimators: 50
+Best reg_alpha: 0.6
+Model accuracy: 0.6303265631222621
+Model F1-score: [0.77325191 0.        ]
+Model recall: [1. 0.]
+Model precision: [0.63032656 0.        ]
 
-model_XGBClassifier_month----------------------
-Model accuracy: 0.7671738731896394
-Model F1-score: [8.68245546e-01 2.24921278e-04]
-Model recall: [9.99795208e-01 1.12549240e-04]
-Model precision: [0.76728835 0.14285714]
+model_XGBClassifier_month
+----------------------
+Best learning_rate: 0.05
+Best max_depth: 5
+Best min_samples_leaf: 1
+Best n_estimators: 50
+Best reg_alpha: 0.1
+Model accuracy: 0.7672786318518713
+Model F1-score: [0.86831654 0.        ]
+Model recall: [0.99996587 0.        ]
+Model precision: [0.76729873 0.        ]
+

@@ -3,12 +3,16 @@ Script to create our basic cleaned dataset
 '''
 import argparse
 from os import path, mkdir
+from numpy import argmax as np_argmax
+from numpy import inf as np_inf
 import logging
 import yaml
 import pandas
 from src.clean.dataset import DataSet
 from src import data_dir, parent_dir
 from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import NMF
 
 pandas.options.mode.chained_assignment = None
 
@@ -89,10 +93,29 @@ def get_watchtime_by_subcategory(
                     .dataframe()\
                     .reset_index()
 
+    # Remove HTML tags from descriptions
+    # i.e. anything between angled brackets
+    classes.description = classes.description.str\
+        .replace(r'<[^<>]*>', '', regex=True)
+
+    # Vectorize description text
+    vectorizer = TfidfVectorizer(stop_words="english")
+    vectorized_text = vectorizer.fit_transform(classes.description)
+
+    logging.info("Clustering based on course descriptions")
+    # Non negative matrix factorization
+    nmf = NMF(n_components=20)
+    H = nmf.fit_transform(vectorized_text)
+    
+    #clusters = [np_argsort(line) for line in H]
+    clusters = np_argmax(H, axis=1)
+    classes["nmf_cluster"] = clusters
+    classes["nmf_cluster"] = classes["nmf_cluster"].apply(lambda x: f"cluster_{x}")
+    
     # tack on class subcategory info onto video views
     video_views = pandas.merge(
         video_views.reset_index(),
-        classes[["class_id", "subcategory"]],
+        classes[["class_id", "nmf_cluster", "subcategory"]],
         on="class_id",
         how="left")
 
@@ -107,24 +130,58 @@ def get_watchtime_by_subcategory(
             values="sum")\
         .fillna(0.0)
 
+    count_by_nmf_topic = video_views.groupby([
+        "uid",
+        "nmf_cluster"])\
+        .count()["sum"]\
+        .reset_index()\
+        .pivot(
+            index="uid",
+            columns="nmf_cluster",
+            values="sum")\
+        .fillna(0)
+
     # for memory purposes, immediately drop table
     del classes
 
-    # Sum for total watchtime
+    # Sum for total watchtime for both
     watchtime_by_subcategory["total_video_watchtime"] = watchtime_by_subcategory\
             .sum(axis=1)
 
+    count_by_nmf_topic["total_watches"] = watchtime_by_subcategory\
+            .sum(axis=1)
+
     # Convert to percentage
-    for col in watchtime_by_subcategory.columns[:-2]:
+    for col in watchtime_by_subcategory.columns[:-1]:
         watchtime_by_subcategory[col] = watchtime_by_subcategory[col] / \
             watchtime_by_subcategory["total_video_watchtime"]
 
-    return watchtime_by_subcategory.reset_index()\
-            .fillna(0.0)\
+    for col in count_by_nmf_topic.columns[:-1]:
+        count_by_nmf_topic[col] = count_by_nmf_topic[col] / \
+            count_by_nmf_topic["total_watches"]
+
+    print(count_by_nmf_topic)
+
+    watchtime_by_subcategory = watchtime_by_subcategory.reset_index()\
+            .fillna(0)\
             .drop(columns="total_video_watchtime")\
             .rename(columns={
                 "uid": "user_uid",              # rename for consistency
                 "Other": "other_subcategory"})  # avoid conflict with payer source column
+
+    count_by_nmf_topic = count_by_nmf_topic.reset_index()\
+            .fillna(0)\
+            .drop(columns="total_watches")\
+            .rename(columns={
+                "uid": "user_uid"})              # rename for consistency
+
+    # Combine two
+    return pandas.merge(
+        watchtime_by_subcategory,
+        count_by_nmf_topic,
+        on="user_uid",
+        how="inner")\
+        .replace([np_inf, -np_inf], 0)
 
 # Progress bar for pandas .apply()
 tqdm.pandas(desc="Converting day of trial to relative day")
@@ -212,6 +269,7 @@ def combine_datasets(config: dict) -> pandas.DataFrame:
     starts_df = open_starts_and_create_target(config)
     video_views_df = open_video_views(config)
     views_by_cat = get_watchtime_by_subcategory(video_views_df, config)
+    print(views_by_cat)
     views_by_day = get_by_day_of_trial(starts_df, video_views_df)
 
     del video_views_df

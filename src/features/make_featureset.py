@@ -4,7 +4,6 @@ from os import path, mkdir
 from src import *
 from tqdm import tqdm
 
-cleaned_dataset = "cleaned.parquet"
 
 def load_cleaned_dataset(file: str) -> pandas.DataFrame:
     filepath = path.join(data_dir, "cleaned", file)
@@ -14,7 +13,7 @@ def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
     df.drop(
         columns=[
             "create_time", # not using datetime obj in model training
-            "user_uid", # not using unique identifiers for training
+            #"user_uid", # not using unique identifiers for training
             "is_active", # TODO not sure what to do with this, so dropping for now
             "is_scholarship", # already filtered on this, all zeros
             "is_direct_to_paid", # already filtered on this, all zeros
@@ -37,7 +36,11 @@ def main():
     parser = argparse.ArgumentParser(
         allow_abbrev=True,
         description='Create featureset for modeling')
-    parser.add_argument('--output_directory', 
+    parser.add_argument(
+        '--cleaned_data',
+        help='cleaned dataset to use')
+    parser.add_argument(
+        '--output_directory', 
         help="where to put file")
 
     args = parser.parse_args()
@@ -47,6 +50,13 @@ def main():
     else:
         data_directory = data_dir
 
+    if args.cleaned_data:
+        cleaned_dataset = args.cleaned_data
+        filename = cleaned_dataset.replace("cleaned", "features")
+    else:
+        cleaned_dataset = "cleaned.parquet"
+        filename = "features.parquet"
+
     df = load_cleaned_dataset(cleaned_dataset)
 
     # drop unwanted cols
@@ -54,7 +64,6 @@ def main():
     df = final_conversions(df)
 
     # Save dataset to parquet file within data dir
-    filename = "features.parquet"
     features_dir = path.join(data_directory, "features")
     if not path.exists(features_dir):
         mkdir(features_dir)

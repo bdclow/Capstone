@@ -1,0 +1,68 @@
+trial_length_days
+Affiliate Referral
+Direct
+Email
+Missing
+Organic Search
+Organic Social
+Other
+Paid FB
+Paid Insta Ambassadors
+Paid Insta Stories
+Paid Search (Brand)
+Paid Search (Non-brand)
+Podcast
+Sponsored Newsletter
+Sponsored Posts
+Student Referral
+Teacher Referral
+Youtube Influencer
+Youtube Pre-roll
+total_watchtime_day_1
+watched_video_length_day_1
+total_watchtime_day_2
+watched_video_length_day_2
+total_watchtime_day_3
+watched_video_length_day_3
+total_watchtime_day_-3
+watched_video_length_day_-3
+total_watchtime_day_-2
+watched_video_length_day_-2
+total_watchtime_day_-1
+watched_video_length_day_-1
+Accounting
+Animation
+Business Analytics
+Crafts
+Creative Writing
+Culinary
+Data Science
+Film & Video
+Finance
+Fine Art
+Freelance & Entrepreneurship
+Game Design
+Gaming
+Graphic Design
+Health & Wellness
+Home Business
+Human Resources
+IT Security
+Illustration
+Languages
+Leadership & Management
+Marketing
+Mobile Development
+Music
+other_subcategory
+Photography
+Product Management
+Productivity
+Sales
+Teaching
+UI/UX Design
+Web Development
+United States
+United Kingdom
+Canada
+India

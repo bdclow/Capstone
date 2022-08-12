@@ -83,7 +83,8 @@ def main():
     if not path.exists(save_model_dir):
         mkdir(save_model_dir)
 
-    estimators = [RandomForestClassifier, XGBClassifier]
+    estimators = [RandomForestClassifier]
+    #estimators = [RandomForestClassifier, XGBClassifier]
 
     for Estimator in estimators:
         for split_of_featureset, trial_length in tqdm(

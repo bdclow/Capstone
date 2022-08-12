@@ -2,7 +2,7 @@
 Script to create our basic cleaned dataset
 '''
 import argparse
-from os import path, mkdir
+from os import path, mkdir, listdir
 import logging
 import yaml
 import pandas
@@ -23,13 +23,14 @@ def load_config(filepath: str) -> dict:
     with open(filepath, "r", encoding="utf-8") as file:
         return yaml.safe_load(file)
 
-def open_starts_and_create_target(config: dict) -> pandas.DataFrame:
+def open_starts_and_create_target(csv_prefix, config: dict) -> pandas.DataFrame:
     '''
     open and filter skillshare starts
     this is our first table which everything else
         gets joined to
     '''
-    starts = DataSet("skillshare_2022_starts.csv", config["starts"])
+    filepath = f"{csv_prefix}_starts.csv"
+    starts = DataSet(filepath, config["starts"])
     starts_df = starts.dataframe(one_hot_categories=True)
     # add a successful conversion column.
     starts_df['success'] = 0
@@ -41,6 +42,12 @@ def open_starts_and_create_target(config: dict) -> pandas.DataFrame:
     starts_df = starts_df.drop(['first_payment_time', 'is_refunded'], axis=1)
 
     return starts_df
+
+def list_of_data_files():
+    '''
+    Walk dir and return files
+    '''
+    return [ file for file in listdir(data_dir) ]
 
 
 def convert_cols(
@@ -57,19 +64,24 @@ def convert_cols(
     return row[(prev_col, day_converted)]
 
 
-def open_video_views(config: dict) -> pandas.DataFrame:
+def open_video_views(
+        csv_prefix: str,
+        config: dict
+    ) -> pandas.DataFrame:
     '''
-    Open all 62 files with video view information
+    Open all files with video view information
+    Find by string matching
     Ensures correct data types for columns
     Returns concatenated whole for dataset as Pandas DF
     '''
+    data_files = list_of_data_files()
+    vviews_files = [ file for file in data_files if f"{csv_prefix}_vviews" in str(file) ]
     video_views = [
             DataSet(
-                f"skillshare_2022_vviews_{i}.csv",
+                file,
                 config["video_views"],
                 log=False)
-            for i in range(0, 63)
-            # files are numbered from 0 to 62
+            for file in vviews_files
     ]
     return pandas.concat([vv.dataframe() 
         for vv in tqdm(video_views, desc="Loading video views dataset")])
@@ -130,9 +142,9 @@ def get_watchtime_by_subcategory(
 tqdm.pandas(desc="Converting day of trial to relative day")
 
 def get_by_day_of_trial(
-    starts: pandas.DataFrame,
-    video_views: pandas.DataFrame
-) -> pandas.DataFrame:
+        starts: pandas.DataFrame,
+        video_views: pandas.DataFrame
+    ) -> pandas.DataFrame:
     '''
     Group video views by day of trial
     '''
@@ -204,13 +216,15 @@ def get_by_day_of_trial(
 
 
 
-def combine_datasets(config: dict) -> pandas.DataFrame:
+def combine_datasets(
+        csv_prefix: str,
+        config: dict) -> pandas.DataFrame:
     '''
     Series of joins to make full cleaned dataset
     '''
     # Subscription sign-ups/starts dataframe, starting point
-    starts_df = open_starts_and_create_target(config)
-    video_views_df = open_video_views(config)
+    starts_df = open_starts_and_create_target(csv_prefix, config)
+    video_views_df = open_video_views(csv_prefix, config)
     views_by_cat = get_watchtime_by_subcategory(video_views_df, config)
     views_by_day = get_by_day_of_trial(starts_df, video_views_df)
 
@@ -259,6 +273,10 @@ def main():
     parser = argparse.ArgumentParser(
         allow_abbrev=True,
         description='created cleaned dataset for modeling')
+
+    parser.add_argument(
+            '--csv_prefix',
+            help='prefix to csv file (e.g. skillshare, new, etc.)')
     parser.add_argument('--output_directory')
     args = parser.parse_args()
 
@@ -266,6 +284,13 @@ def main():
         data_directory = args.target_dir
     else:
         data_directory = data_dir
+
+    if args.csv_prefix:
+        csv_prefix = args.csv_prefix
+        outfile = f"{csv_prefix}_cleaned.parquet"
+    else:
+        csv_prefix = 'skillshare_2022'
+        outfile = "cleaned.parquet"
 
     # Find YAML file and load
     script_path = path.abspath(__file__)
@@ -275,16 +300,15 @@ def main():
     logging.info("LOADING DATASETS, JOINING...")
 
     # Load and combine datasets
-    cleaned_df = combine_datasets(config)
+    cleaned_df = combine_datasets(csv_prefix, config)
 
     # Save dataset to parquet file within data dir
-    filename = "cleaned.parquet"
     cleaned_dir = path.join(data_directory, "cleaned")
     if not path.exists(cleaned_dir):
         mkdir(cleaned_dir)
-    outfilepath = path.join(cleaned_dir, filename)
+    outfilepath = path.join(cleaned_dir, outfile)
     cleaned_df.to_parquet(outfilepath)
-    logging.info(f"Cleaned dataset saved to {outfilepath}")
+    logging.info(f"Cleaned dataset ({csv_prefix}) saved to {outfilepath}")
 
 
 main()

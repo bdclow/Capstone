@@ -75,13 +75,24 @@ def main():
     week_pred_probabilities = week_model.predict_proba(
             week_data.drop(columns=["success", "user_uid"]))
 
+    print("BEFORE")
+    print(len(month_data))
+    print(len(week_data))
     month_data["Prediction"] = month_predictions
-    month_data["PredictionProb"] = month_pred_probabilities[:, 0]
+    month_data["ChurnProb"] = month_pred_probabilities[:, 0]
 
     week_data["Prediction"] = week_predictions
-    week_data["PredictionProb"] = week_pred_probabilities[: , 0]
+    week_data["ChurnProb"] = week_pred_probabilities[: , 0]
+    print("AFTER")
+    print(len(month_data))
+    print(len(week_data))
+
 
     final = pd_concat([week_data, month_data])
+    print("final")
+    print(len(final))
+    print("df")
+    print(len(df))
 
     print(final)
     # Save output

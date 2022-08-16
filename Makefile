@@ -1,5 +1,5 @@
 
-newtrialers: saved_models 
+all: saved_models 
 	@. env/bin/activate; python -m src.clean.make_dataset --csv_prefix "new_trialers"
 	@. env/bin/activate; python -m src.features.make_featureset --cleaned_data "new_trialers_cleaned.parquet"
 	@. env/bin/activate; python -m src.models.inference --parquet "new_trialers_features.parquet"
@@ -7,10 +7,8 @@ newtrialers: saved_models
 saved_models: | data/features/features.parquet
 	@. env/bin/activate; python -m src.models.model_tuning
 
-data/features/features.parquet: featureset
+data/features/features.parquet: data/cleaned/cleaned.parquet data/cleaned/cleaned.parquet
 	@. env/bin/activate; python -m src.features.make_featureset
-
-featureset: data/cleaned/cleaned.parquet data/cleaned/cleaned.parquet
 
 data/cleaned/cleaned.parquet: | data/watch_time_by_trial_day.csv
 	@. env/bin/activate; python -m src.clean.make_dataset

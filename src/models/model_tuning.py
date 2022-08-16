@@ -34,7 +34,13 @@ def separate_trials(df) -> tuple:
     logging.info(f"NUMBER OF MONTH LONG TRIALS = {len(month_trials)}")
     return week_trials, month_trials
 
-def tune_model(X_train, y_train, Estimator):
+def tune_model(
+        X_train: pandas.DataFrame, 
+        y_train: pandas.Series, 
+        Estimator,  #sklearn model
+        trial_length: int, 
+        out_dir: str
+    ) -> dict:
     '''
     takes training data
     fits RFC
@@ -43,15 +49,15 @@ def tune_model(X_train, y_train, Estimator):
 
     param_grid = {
             'n_estimators': range(50, 251, 50),
-            'min_samples_leaf':range(1,11,2),
             'max_depth':range(5,8)} 
     if Estimator is XGBClassifier:
         param_grid["reg_alpha"] = [0.1, 0.3, 0.6]
         param_grid["learning_rate"] = [0.05, 0.10, 0.15, 0.3]
     else:
         param_grid["min_samples_split"] = range(2,11,2)
+        param_grid['min_samples_leaf'] = range(1,11,2)
 
-    gsearch1 = GridSearchCV(
+    gsearch = GridSearchCV(
             estimator = Estimator(
                 random_state=RANDOM_SEED),
             param_grid = param_grid, 
@@ -60,8 +66,13 @@ def tune_model(X_train, y_train, Estimator):
             n_jobs=-1,
             cv=5)
 
-    gsearch1.fit(X_train,y_train)
-    best_params = gsearch1.best_params_
+    gsearch.fit(X_train,y_train)
+
+    grid_search_results = pandas.DataFrame(gsearch.cv_results_)
+    csv_file_path = path.join(
+            f"gridsearch_results_{Estimator.__name__}_{trial_length}.csv")
+    grid_search_results.to_csv(csv_file_path)
+    best_params = gsearch.best_params_
     for param in param_grid.keys():
         logging.info(f"Best {param} : {best_params[param]}")
     
@@ -96,7 +107,8 @@ def main():
             X_train, y_train, X_test, y_test = preprocess_data(split_of_featureset)
 
             #n_estimators, max_depth, min_samples_split, min_samples_leaf 
-            best_params = tune_model(X_train, y_train, Estimator)
+            best_params = tune_model(X_train, y_train, Estimator, 
+                    trial_length, save_model_dir)
 
             # Calculate class weights for imbalanced dataset
             classes=np_unique(y_train)

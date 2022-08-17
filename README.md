@@ -8,15 +8,22 @@
 + Ryan Estrada
 + Garrett Amstutz
 
-## To get started:
+## To run sample data:
 + Install GNU make
 + Install python-virtualenv
+
+> make sample
+
+
+## To run entire pipeline (Need access to files on Google Drive)
 > make
 
 + To make sure data files up to date
+
 > make update_data
 
 + To clean data intermediates
+
 > make clean_artifacts
 
 ## Goals

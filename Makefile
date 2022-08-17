@@ -4,6 +4,21 @@ all: saved_models
 	@. env/bin/activate; python -m src.features.make_featureset --cleaned_data "new_trialers_cleaned.parquet"
 	@. env/bin/activate; python -m src.models.inference --parquet "new_trialers_features.parquet"
 
+# Targets for sample data
+# -----------------------
+sample: | saved_models data/features/sample_features.parquet
+	@. env/bin/activate; python -m src.models.inference --parquet "sample_features.parquet"
+
+data/features/sample_features.parquet: data/cleaned/sample_cleaned.parquet
+	@. env/bin/activate; python -m src.features.make_featureset --cleaned_data "sample_cleaned.parquet"
+
+data/cleaned/sample_cleaned.parquet: sample_data/cleaned/sample_cleaned.parquet
+	mkdir -p data/cleaned
+	cp -v sample_data/cleaned/sample_cleaned.parquet data/cleaned/sample_cleaned.parquet 
+
+sample_data/cleaned/sample_cleaned.parquet:
+	@echo "No sample dataset available, email team"
+#------------------------
 saved_models: | data/features/features.parquet
 	@. env/bin/activate; python -m src.models.model_tuning
 

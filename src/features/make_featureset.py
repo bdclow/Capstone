@@ -6,10 +6,21 @@ from tqdm import tqdm
 
 
 def load_cleaned_dataset(file: str) -> pandas.DataFrame:
+    '''
+    Load cleaned parquet file
+    Returns DataFrame
+    '''
     filepath = path.join(data_dir, "cleaned", file)
     return pandas.read_parquet(filepath)
 
 def final_conversions(df: pandas.DataFrame) -> pandas.DataFrame:
+    '''
+    Drops unwanted columns
+    Converts boolean columns to integer
+    Fixes any NaN values
+
+    Returns DataFrame
+    '''
     df.drop(
         columns=[
             "create_time", # not using datetime obj in model training
@@ -38,7 +49,7 @@ def main():
         description='Create featureset for modeling')
     parser.add_argument(
         '--cleaned_data',
-        help='cleaned dataset to use')
+        help='cleaned dataset to use, parquet format')
     parser.add_argument(
         '--output_directory', 
         help="where to put file")

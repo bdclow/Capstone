@@ -15,14 +15,15 @@ def load_data() -> pd.DataFrame:
     Loads into pandas DataFrame
     '''
     pred_dir = "data/predictions/"
-    all_pred_files = os.scandir(pred_dir)
-    all_pred_files = list(all_pred_files)
-    all_pred_files.sort(key=lambda f: f.name)
-    prediction_file = all_pred_files.pop()
+    pred_files = list(os.scandir(pred_dir))
+    pred_files.sort(key=lambda f: f.name)
 
-    df = pd.read_csv(prediction_file.path, index_col=0)
+    df = pd.read_csv(pred_files.pop().path, index_col=0)
+
+    # Add color column for predictions > THRESHOLD
     df["color"] = df.ChurnProb.apply(
         lambda x: "Convert" if x < THRESHOLD else "Churn")
+
     return df
 
 new_trialers = load_data()
@@ -43,9 +44,11 @@ def make_figure_1():
 
 @app.callback(
     Output('table-1', 'children'),
-    Input('graph-1', 'hoverData')
-)
-def make_graph_2(value):
+    Input('graph-1', 'hoverData'))
+def make_table_1(value):
+    '''
+    Construct HTML table from non-zero data in row selected by hovering
+    '''
     if value:
         index = value['points'][0]['pointNumber']
         series = new_trialers.iloc[index]
@@ -66,32 +69,26 @@ def make_graph_2(value):
     else:
         return None
 
-app.layout = html.Div(
-    [
-        html.H1(
-            'Skillshare Churn Predictions',
+app.layout = html.Div([
+    html.H1(
+        'Skillshare Churn Predictions',
+        style={
+            'textAlign': 'center',
+            'color': 'black',
+            "background": "white"}),
+    html.P("\n\n"),
+    html.Div([
+        dcc.Graph(
+            id='graph-1',
+            figure=make_figure_1()),
+        html.Table(
+            id='table-1',
             style={
-                'textAlign': 'center',
-                'color': 'black',
-                "background": "white"}),
-        html.P("\n\n"),
-        html.Div([
-            dcc.Graph(
-                id='graph-1',
-                figure=make_figure_1()),
-            html.Table(
-                id='table-1',
-                style={
-                    "margin-left": "auto",
-                    "margin-right": "auto"
-                }
-            ),
-            ],
-            style={
-                "margin": "0% 25% 0% 25%"
-            }
-        )
-    ])
+                "margin-left": "auto",
+                "margin-right": "auto"}
+        )],
+        style={
+            "margin": "0% 25% 0% 25%"
+        })])
 
-app.run_server(mode='inline', debug=True)
-
+app.run_server(debug=True)

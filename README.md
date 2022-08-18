@@ -15,6 +15,10 @@
 > make sample
 
 
+## To use dashboard
+
+> make dashboard
+
 ## To run entire pipeline (Need access to files on Google Drive)
 > make
 
